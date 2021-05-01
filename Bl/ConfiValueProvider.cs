@@ -13,12 +13,6 @@ namespace Confi
     public class ConfiValueProvider : LookupOrFallbackDefaultValueProvider
     {
         private string _path;
-
-        // public ConfiValueProvider(string path)
-        // {
-        //     ;
-        // }
-
         public ConfiValueProvider(string path)
         {
             _path = path;

@@ -4,8 +4,8 @@ namespace Confi
 {
     public interface TubeSettings 
     {
-        string LinorSetting { get; set; }
+        string hvps { get; set; }
 
-        string SamSettings { get; set; }
+        string voltage { get; set; }
     }
 }
