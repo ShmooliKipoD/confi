@@ -32,7 +32,7 @@ namespace Confi
                     StackTrace st = new StackTrace();
                     string moq = mock.ToString().Replace("Mock<", "").Replace(":1>", "");
 
-                    Console.WriteLine($"===={moq}====");
+                    //Console.WriteLine($"===={moq}====");
 
                     var frames = st.GetFrames()
                                     .Select(f => new
@@ -48,37 +48,27 @@ namespace Confi
                                     .Where(f => f.Classy == moq);
 
                     
-                    frames.ToList().ForEach(f => Console.WriteLine($"{f.Method}: {f.Classy}"));
+                    //frames.ToList().ForEach(f => Console.WriteLine($"{f.Method}: {f.Classy}"));
 
                     var frame = frames.First();
 
                     string filePath = $"{Path.Combine(_path, frame.Classy)}.ini";
-                    if(!File.Exists(filePath))
-                        File.Create(filePath);
+                    if (!File.Exists(filePath))
+                    {
+                        using (FileStream fs = File.Create(filePath))
+                            fs.Close();
+                    }
 
                     var parser = new FileIniDataParser();
                     IniData data = parser.ReadFile(filePath);
 
+                    if (!data["Main"].ContainsKey(frame.Method))
+                    {
+                        data["Main"][frame.Method] = "";
+                        parser.WriteFile(filePath, data);
+                    }
 
-                    data["UI"][frame.Method] = "";
-                    parser.WriteFile(filePath, data);
-                    // st.GetFrames()
-                    //   .ToList()
-                    //   .ForEach(f => {
-                    //       string method = f.GetMethod()
-                    //                        .Name
-                    //                        .Replace("get_", "");
-
-                    //       string classy = f.GetMethod()
-                    //                       .DeclaringType
-                    //                       .Name
-                    //                       .Replace("Proxy", "");
-
-                    //       Console.WriteLine($"{method}:");
-                    //       Console.WriteLine($"\t- {classy}");
-                    //   });
-
-                    return ( "name" );
+                    return ( data["Main"][frame.Method] );
                 });
             base.Register(typeof(List<>), (type, mock) => Activator.CreateInstance(type));
         }
