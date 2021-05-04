@@ -4,8 +4,8 @@ namespace Confi
 {
     public interface TubeSettings 
     {
-        string hvps { get; set; }
+        string Power_hvps { get; set; }
 
-        string voltage { get; set; }
+        string Power_voltage { get; set; }
     }
 }

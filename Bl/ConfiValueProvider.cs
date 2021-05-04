@@ -7,6 +7,7 @@ using Moq;
 using System.IO;
 using IniParser;
 using IniParser.Model;
+using System.Reflection;
 
 namespace Confi
 {
@@ -17,61 +18,82 @@ namespace Confi
         {
             _path = path;
 
-            if(!Directory.Exists(path))
+            if (!Directory.Exists(path))
                 Directory.CreateDirectory(path);
 
             base.Register(
-                typeof(string), 
-                (type, mock) => {
+                typeof(string),
+                (type, mock) =>
+                {
                     StackTrace st = new StackTrace();
                     string moq = mock.ToString().Replace("Mock<", "").Replace(":1>", "");
-
-                    //Console.WriteLine($"===={moq}====");
-
-                    var frames = st.GetFrames()
-                                    .Select(f => new
-                                    {
-                                        Method = f.GetMethod()
-                                                  .Name
-                                                  .Replace("get_", ""),
-                                        Classy = f.GetMethod()
-                                                    .DeclaringType
-                                                    .Name
-                                                    .Replace("Proxy", "")
-                                    })
-                                    .Where(f => f.Classy == moq);
-
-                    
-                    //frames.ToList().ForEach(f => Console.WriteLine($"{f.Method}: {f.Classy}"));
-
-                    var frame = frames.First();
-
-                    string filePath = $"{Path.Combine(_path, frame.Classy)}.ini";
-                    if (!File.Exists(filePath))
-                    {
-                        using (FileStream fs = File.Create(filePath))
-                            fs.Close();
-                    }
-
-                    var parser = new FileIniDataParser();
-                    IniData data = parser.ReadFile(filePath);
-
-                    if (!data["Main"].ContainsKey(frame.Method))
-                    {
-                        data["Main"][frame.Method] = "";
-                        parser.WriteFile(filePath, data);
-                    }
-
-                    return ( data["Main"][frame.Method] );
+                    return GetValue(st, moq);
                 });
-            base.Register(typeof(List<>), (type, mock) => Activator.CreateInstance(type));
+            base.Register(typeof(bool), (type, mock) => Activator.CreateInstance(type));
+        }
+
+        public string GetValue(StackTrace st, string moq)
+        {
+            var frames = st.GetFrames()
+                            .Select(f => new
+                            {
+                                Base = f.GetMethod(),
+
+                                Method = f.GetMethod()
+                                            .Name
+                                            .Replace("get_", ""),
+
+                                Classy = f.GetMethod()
+                                            .DeclaringType
+                                            .Name
+                                            .Replace("Proxy", "")
+                            })
+                            .Where(f => f.Classy == moq);
+
+            var frame = frames.First();
+
+            string filePath = $"{Path.Combine(_path, frame.Classy)}.ini";
+            if (!File.Exists(filePath))
+            {
+                using (FileStream fs = File.Create(filePath))
+                    fs.Close();
+            }
+
+            FileIniDataParser parser = new FileIniDataParser();
+            IniData data = parser.ReadFile(filePath);
+
+            string[] sectionAndName = frame.Method.Split("_");
+
+            if (sectionAndName.Length == 1)
+            {
+                if (!data["Main"].ContainsKey(frame.Method))
+                {
+                    data["Main"][frame.Method] = "";
+                    parser.WriteFile(filePath, data);
+                }
+
+                return (data["Main"][frame.Method]);
+            } else if(sectionAndName.Length == 2)
+            {
+                string section = sectionAndName[0];
+                string name = sectionAndName[1];
+                if (!data[section].ContainsKey(name))
+                {
+                    data[section][name] = "";
+                    parser.WriteFile(filePath, data);
+                }
+
+                return (data[section][frame.Method]);
+            }
+
+            throw new Exception("Bam ... ");
         }
 
         public string StringType(string name)
         {
 
-                return name;
-            
+            return name;
+
         }
     }
 }
