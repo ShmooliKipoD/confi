@@ -9,8 +9,10 @@ namespace Confi
         {
             Mock<TubeSettings> mock = new Mock<TubeSettings> { DefaultValueProvider = new ConfiValueProvider("Configuration") };
             TubeSettings tubeSettings = mock.Object;  // => "?"
-            Console.WriteLine(tubeSettings.Power_voltage);
-            Console.WriteLine(tubeSettings.Power_hvps);
+            Console.WriteLine(tubeSettings.Power_Voltage);
+            Console.WriteLine(tubeSettings.Power_HVPS);
+            Console.WriteLine(tubeSettings.IsOn);
+
         }
     }
 }

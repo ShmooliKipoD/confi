@@ -29,10 +29,21 @@ namespace Confi
                     string moq = mock.ToString().Replace("Mock<", "").Replace(":1>", "");
                     return GetValue(st, moq);
                 });
-            base.Register(typeof(bool), (type, mock) => Activator.CreateInstance(type));
+            base.Register(typeof(bool), (type, mock) => 
+                {
+                    StackTrace st = new StackTrace();
+                    string moq = mock.ToString().Replace("Mock<", "").Replace(":1>", "");
+                    return bool.Parse(GetValue(st, moq, "false"));
+                });
+            base.Register(typeof(double), (type, mock) => 
+                {
+                    StackTrace st = new StackTrace();
+                    string moq = mock.ToString().Replace("Mock<", "").Replace(":1>", "");
+                    return double.Parse(GetValue(st, moq, 0.0.ToString()));
+                });
         }
 
-        public string GetValue(StackTrace st, string moq)
+        public string GetValue(StackTrace st, string moq, string defaultValue = "")
         {
             var frames = st.GetFrames()
                             .Select(f => new
@@ -68,22 +79,22 @@ namespace Confi
             {
                 if (!data["Main"].ContainsKey(frame.Method))
                 {
-                    data["Main"][frame.Method] = "";
+                    data["Main"][frame.Method] = defaultValue;
                     parser.WriteFile(filePath, data);
                 }
 
-                return (data["Main"][frame.Method]);
+                return data["Main"][frame.Method];
             } else if(sectionAndName.Length == 2)
             {
                 string section = sectionAndName[0];
                 string name = sectionAndName[1];
                 if (!data[section].ContainsKey(name))
                 {
-                    data[section][name] = "";
+                    data[section][name] = defaultValue;
                     parser.WriteFile(filePath, data);
                 }
 
-                return (data[section][frame.Method]);
+                return data[section][name];
             }
 
             throw new Exception("Bam ... ");

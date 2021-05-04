@@ -4,8 +4,10 @@ namespace Confi
 {
     public interface TubeSettings 
     {
-        string Power_hvps { get; set; }
+        double Power_HVPS { get; set; }
 
-        string Power_voltage { get; set; }
+        double Power_Voltage { get; set; }
+
+        bool IsOn { get; set; }
     }
 }
